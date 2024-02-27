@@ -1,6 +1,6 @@
-# AXSlime
+# AXSlimeHaptics
 
-A bridge to make AXIS trackers work with SlimeVR.
+A bridge to make AXIS trackers work with SlimeVR and provide haptic functionality via OSC (for games like VRCHAT). 
 
 ## Credit
 
