@@ -1,3 +1,4 @@
+using System.Net;
 using System.Numerics;
 using AxSlime.Axis;
 using AxSlime.Slime;
@@ -12,9 +13,12 @@ namespace AxSlime.Bridge
             MathF.PI / 2f
         );
 
-        public BridgeController(AxisOutputData axisTrackers)
+        private readonly IPEndPoint? _slimeEndPoint;
+
+        public BridgeController(AxisOutputData axisTrackers, IPEndPoint? slimeEndPoint = null)
         {
             AxisTrackers = axisTrackers;
+            _slimeEndPoint = slimeEndPoint;
         }
 
         public AxisOutputData AxisTrackers { get; set; }
@@ -32,7 +36,7 @@ namespace AxSlime.Bridge
 
         private void UpdateTracker(AxisTracker axis)
         {
-            var slime = (SlimeTrackers[axis.TrackerId] ??= new SlimeUdpSocket());
+            var slime = (SlimeTrackers[axis.TrackerId] ??= new SlimeUdpSocket(_slimeEndPoint));
             if (!axis.IsActive)
             {
                 slime.Stop();
@@ -43,7 +47,15 @@ namespace AxSlime.Bridge
                 RegisterTracker(axis, slime);
             }
 
-            slime.SendPacket(new Packet17RotationData() { Rotation = AxesOffset * axis.Rotation });
+            // Quaternion left to right conversion
+            Quaternion slimeQuat = new Quaternion(
+                -axis.Rotation.X,
+                axis.Rotation.Y,
+                axis.Rotation.Z,
+                axis.Rotation.W
+            );
+
+            slime.SendPacket(new Packet17RotationData() { Rotation = AxesOffset * slimeQuat });
 
             if (axis.HasAcceleration)
             {
